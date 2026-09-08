@@ -1,0 +1,50 @@
+name: Release validation
+
+# Validate the release flow for both direct pushes and pull requests.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  release-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. checkout
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirments.txt
+
+      # 2. environment variable replace (placeholder)
+      # Add the actual replacement command here when the target files,
+      # variable names, and GitHub Environment/Secrets are defined.
+      - name: Environment variable replacement (placeholder)
+        run: echo "Environment variable replacement is not enabled for this validation."
+
+      # 3. build
+      # This project has no package build configuration yet. Compiling the
+      # application source provides a minimal build validation in the meantime.
+      - name: Build
+        run: python -m compileall -q src
+
+      # 4. test
+      - name: Run tests
+        run: python -m pytest -q
+
+      # 5. deploy (placeholder)
+      # Add deployment only after a target environment and deployment method
+      # have been agreed. Keep this step non-mutating during validation.
+      - name: Deploy (placeholder)
+        run: echo "Deployment is not enabled for this validation."
