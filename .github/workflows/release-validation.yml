@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  release-validation:
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirments.txt
+          python -m pip install -r requirements.txt
 
       # 2. environment variable replace (placeholder)
       # Add the actual replacement command here when the target files,
@@ -43,7 +44,36 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-      # 5. deploy (placeholder)
+  # This job waits for the required reviewers configured on the
+  # "release-approval" GitHub Environment before it starts.
+  approve:
+    name: Approve
+    needs: validate
+    # Push: evaluate the pushed branch. Pull request: evaluate its target branch.
+    if: >-
+      needs.validate.result == 'success' &&
+      (
+        (github.event_name == 'push' &&
+          contains(fromJSON('["main","development","staging","production"]'), github.ref_name)) ||
+        (github.event_name == 'pull_request' &&
+          contains(fromJSON('["main","development","staging","production"]'), github.base_ref))
+      )
+    runs-on: ubuntu-latest
+    environment:
+      name: release-approval
+
+    steps:
+      - name: Approval confirmed
+        run: echo "Deployment approval received."
+
+  deploy:
+    name: Deploy
+    needs: approve
+    # Explicitly handle a skipped Approve job on non-release branches.
+    if: ${{ always() && needs.approve.result == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
       # Add deployment only after a target environment and deployment method
       # have been agreed. Keep this step non-mutating during validation.
       - name: Deploy (placeholder)
