@@ -9,7 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  release-validation:
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
 
     steps:
@@ -43,7 +44,25 @@ jobs:
       - name: Run tests
         run: python -m pytest -q
 
-      # 5. deploy (placeholder)
+  # This job waits for the required reviewers configured on the
+  # "release-approval" GitHub Environment before it starts.
+  approve:
+    name: Approve
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: release-approval
+
+    steps:
+      - name: Approval confirmed
+        run: echo "Deployment approval received."
+
+  deploy:
+    name: Deploy
+    needs: approve
+    runs-on: ubuntu-latest
+
+    steps:
       # Add deployment only after a target environment and deployment method
       # have been agreed. Keep this step non-mutating during validation.
       - name: Deploy (placeholder)
