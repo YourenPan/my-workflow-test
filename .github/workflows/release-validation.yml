@@ -49,6 +49,15 @@ jobs:
   approve:
     name: Approve
     needs: validate
+    # Push: evaluate the pushed branch. Pull request: evaluate its target branch.
+    if: >-
+      needs.validate.result == 'success' &&
+      (
+        (github.event_name == 'push' &&
+          contains(fromJSON('["main","development","staging","production"]'), github.ref_name)) ||
+        (github.event_name == 'pull_request' &&
+          contains(fromJSON('["main","development","staging","production"]'), github.base_ref))
+      )
     runs-on: ubuntu-latest
     environment:
       name: release-approval
@@ -60,6 +69,8 @@ jobs:
   deploy:
     name: Deploy
     needs: approve
+    # Explicitly handle a skipped Approve job on non-release branches.
+    if: ${{ always() && needs.approve.result == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
